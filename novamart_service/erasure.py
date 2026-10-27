@@ -21,6 +21,7 @@ def create_erasure_request(payload: dict) -> dict:
             "submission_id": submission_id,
             "request_id": payload["request_id"],
             "attempt": payload.get("attempt", 0),
+            "scenario_mode": payload.get("scenario_mode", "normal"),
             "customer_id": payload["customer_id"],
             "categories": list(payload["categories"]),
             "discovered_item_ids": list(payload["discovered_item_ids"]),
