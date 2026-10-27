@@ -4,10 +4,12 @@ import httpx
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.agents.audit import AuditAgent
+from app.agents.human_review import HumanReviewAgent
 from app.agents.monitoring import MonitoringAgent
 from app.agents.deletion_request import DeletionRequestAgent
 from app.agents.discovery import DiscoveryAgent
@@ -28,6 +30,7 @@ deletion_agent = DeletionRequestAgent()
 verification_agent = VerificationAgent()
 audit_agent = AuditAgent()
 monitoring_agent = MonitoringAgent()
+human_review_agent = HumanReviewAgent()
 NOVAMART_API = "http://127.0.0.1:9000"
 
 
@@ -187,6 +190,29 @@ async def monitoring_retry(request_id: str):
     else:
         await event_bus.publish({"agent": "Monitoring", "status": "INFO", "request_id": request_id, "message": f"Retry budget recorded: {result['retry_count']} / {monitoring_agent.max_retries}. This endpoint does not resubmit a company deletion request; company authorization is still required."})
     return result
+
+class HumanTicketResolution(BaseModel):
+    note: str = Field(min_length=3, max_length=500)
+
+
+@app.get("/api/human-review")
+async def human_review_tickets(status: str | None = None):
+    if status and status not in {"OPEN", "RESOLVED"}:
+        raise HTTPException(status_code=422, detail="Status must be OPEN or RESOLVED.")
+    return {"tickets": human_review_agent.list_tickets(status)}
+
+
+@app.post("/api/human-review/{ticket_id}/resolve")
+async def resolve_human_review(ticket_id: str, payload: HumanTicketResolution):
+    ticket = human_review_agent.resolve_ticket(ticket_id, payload.note.strip())
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="Human-review ticket not found.")
+    if ticket["status"] != "RESOLVED":
+        raise HTTPException(status_code=409, detail="Ticket could not be resolved.")
+    await event_bus.publish({"agent": "Monitoring", "status": "SUCCESS", "request_id": ticket["request_id"],
+                             "message": "Human-review ticket " + ticket_id + " resolved: " + payload.note.strip()})
+    return ticket
+
 
 @app.get("/api/audit")
 async def audit_events(limit: int = 100):
