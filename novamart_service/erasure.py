@@ -9,14 +9,18 @@ _requests: dict[str, dict] = {}
 
 
 def create_erasure_request(payload: dict) -> dict:
+    # submission_id makes each bounded retry a distinct, idempotent company ticket.
+    submission_id = payload.get("submission_id") or payload["request_id"]
     with _lock:
-        existing = _requests.get(payload["request_id"])
+        existing = _requests.get(submission_id)
         if existing:
             return dict(existing)
         company_ticket = "NM-" + uuid4().hex[:8].upper()
         record = {
             "company_ticket": company_ticket,
+            "submission_id": submission_id,
             "request_id": payload["request_id"],
+            "attempt": payload.get("attempt", 0),
             "customer_id": payload["customer_id"],
             "categories": list(payload["categories"]),
             "discovered_item_ids": list(payload["discovered_item_ids"]),
@@ -24,7 +28,7 @@ def create_erasure_request(payload: dict) -> dict:
             "execution": "NOT_EXECUTED",
             "message": "Request received by NovaMart. Authorized company staff must review and execute any approved deletion.",
         }
-        _requests[payload["request_id"]] = record
+        _requests[submission_id] = record
         return dict(record)
 
 
