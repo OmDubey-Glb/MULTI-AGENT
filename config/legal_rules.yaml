@@ -1,0 +1,16 @@
+# Illustrative demo policy only; not legal advice.
+# Validate legal categories and deadlines with qualified counsel before production.
+default_deadline_days: 30
+categories:
+  profile_identity:
+    label: Personal profile
+    demo_action: DELETE
+  contact_details:
+    label: Email address
+    demo_action: DELETE
+  order_history:
+    label: Order history
+    demo_action: REVIEW
+  invoices:
+    label: Invoices
+    demo_action: RETAIN
