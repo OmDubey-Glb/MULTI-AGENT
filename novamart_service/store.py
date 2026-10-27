@@ -69,6 +69,7 @@ def execute_approved_erasure(customer_id: str, categories: list[str], item_ids: 
                 row["customer_id"].casefold() == customer_id.casefold()
                 and row["category"] in allowed_categories
                 and row["item_id"] in allowed_ids
+                and row["item_id"] not in preserve_ids
             )
         ]
         removed = before - len(_records)
