@@ -101,6 +101,24 @@ async def run_deletion_request(request_id: str):
 
 
 
+
+@app.post("/api/company/approve/{company_ticket}")
+async def company_approve(company_ticket: str):
+    """Forward an explicit demo-operator action to the mock NovaMart service."""
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        response = await client.post(
+            f"{NOVAMART_API}/company/v1/erasure-requests/{company_ticket}/approve-and-execute"
+        )
+        response.raise_for_status()
+        result = response.json()
+    await event_bus.publish({
+        "agent": "NovaMart Company Staff",
+        "status": "SUCCESS",
+        "request_id": result["request_id"],
+        "message": "Mock company operator action completed against synthetic demo records.",
+    })
+    return result
+
 @app.post("/api/verify/{request_id}")
 async def verify_request(request_id: str):
     request = get_request(request_id)
