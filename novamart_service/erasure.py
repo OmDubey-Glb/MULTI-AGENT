@@ -31,3 +31,21 @@ def create_erasure_request(payload: dict) -> dict:
 def list_erasure_requests() -> list[dict]:
     with _lock:
         return [dict(item) for item in _requests.values()]
+
+
+def get_erasure_request(company_ticket: str) -> dict | None:
+    with _lock:
+        item = next((r for r in _requests.values() if r["company_ticket"] == company_ticket), None)
+        return dict(item) if item else None
+
+
+def mark_executed(company_ticket: str, execution_result: dict) -> dict | None:
+    with _lock:
+        for item in _requests.values():
+            if item["company_ticket"] == company_ticket:
+                item["status"] = "COMPANY_EXECUTED"
+                item["execution"] = "EXECUTED"
+                item["execution_result"] = dict(execution_result)
+                item["message"] = "NovaMart demo staff approved and executed this request against synthetic records."
+                return dict(item)
+    return None
