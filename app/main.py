@@ -106,13 +106,13 @@ async def events():
     async def stream():
         queue = event_bus.subscribe()
         try:
-            yield "event: connected\\ndata: {}\\n\\n"
+            yield "event: connected\ndata: {}\n\n"
             while True:
                 try:
                     item = await asyncio.wait_for(queue.get(), timeout=15)
-                    yield f"data: {json.dumps(item)}\\n\\n"
+                    yield f"data: {json.dumps(item)}\n\n"
                 except asyncio.TimeoutError:
-                    yield ": keep-alive\\n\\n"
+                    yield ": keep-alive\n\n"
         finally:
             event_bus.unsubscribe(queue)
 
