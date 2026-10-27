@@ -17,3 +17,8 @@ The Monitoring & SLA Control panel displays tracked requests, company tickets, d
 ## Demo and production boundaries
 
 The monitor uses local SQLite and is intended for the offline hackathon prototype. It does not run a background scheduler; checks occur when monitoring endpoints are called. Production should use a durable shared task store, scheduled workers, authenticated operator actions, configured retention/deadline rules reviewed by counsel, and notification channels. The 30-day value is illustrative, not legal advice.
+
+
+## Retry-budget safety clarification
+
+The current `POST /api/monitoring/retry/{request_id}` endpoint records an attempt against the monitoring budget only. It does **not** submit another deletion request to NovaMart and does not delete data. The counter is hard-capped at the configured maximum (default 3); repeated calls after the cap leave the count unchanged and mark the request for human review. A future retry executor must create a new company-side request scoped only to verified leftovers and must preserve the company's approval step before execution.
