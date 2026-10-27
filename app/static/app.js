@@ -39,3 +39,18 @@ $('#verify-audit').addEventListener('click',refreshAudit);
 refreshAudit();
 
 setInterval(refreshAudit, 5000);
+
+async function refreshMonitoring(){
+  try{
+    const data=await api('/api/monitoring');
+    const s=data;
+    $('#monitor-summary').textContent='TOTAL '+s.total+'  ·  PENDING COMPANY '+s.pending_company+'  ·  DEADLINE BREACH '+s.overdue+'  ·  RETRY LIMIT '+s.retry_limit_reached+'  ·  MAX RETRIES '+s.max_retries;
+    $('#monitor-list').innerHTML=s.requests.length?s.requests.map(r=>{
+      const deadline=new Date(r.deadline_at).toLocaleString();
+      return '<div class="monitor-row"><b>'+r.request_id+' · '+r.status+'</b><span>Deadline: '+deadline+' · Retry '+r.retry_count+'/'+s.max_retries+'</span><small>'+(r.company_ticket||'No company ticket')+(r.alert?' · '+r.alert:'')+'</small></div>';
+    }).join(''):'No requests being monitored yet.';
+  }catch(error){$('#monitor-summary').textContent='Monitoring unavailable: '+error.message;}
+}
+$('#refresh-monitor').addEventListener('click',refreshMonitoring);
+setInterval(refreshMonitoring,10000);
+refreshMonitoring();
