@@ -115,6 +115,8 @@ def submit_request(data: RequestSubmit) -> dict:
     session = _sessions.get(data.session_id)
     if not session or not session.get("verified"):
         raise HTTPException(status_code=403, detail="Verify the OTP before submitting a request.")
+    if session.get("consumed"):
+        raise HTTPException(status_code=409, detail="This verified session has already submitted a request.")
     if time.time() > session["expires_at"]:
         raise HTTPException(status_code=410, detail="Verification session expired.")
     selected = list(dict.fromkeys(data.categories))
