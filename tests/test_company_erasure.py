@@ -1,0 +1,34 @@
+from fastapi.testclient import TestClient
+
+from novamart_service.main import app
+from novamart_service.erasure import list_erasure_requests
+
+
+client = TestClient(app)
+
+
+def test_company_receives_request_without_executing_deletion():
+    response = client.post("/company/v1/erasure-requests", json={
+        "request_id": "ER-TEST000001",
+        "customer_id": "CUST-1001",
+        "categories": ["profile_identity"],
+        "discovered_item_ids": ["profile:1001"],
+    })
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "PENDING_COMPANY_APPROVAL"
+    assert body["execution"] == "NOT_EXECUTED"
+    assert body["company_ticket"].startswith("NM-")
+
+
+def test_company_request_is_idempotent():
+    payload = {
+        "request_id": "ER-TEST000002",
+        "customer_id": "CUST-1001",
+        "categories": ["contact_details"],
+        "discovered_item_ids": ["contact:1001"],
+    }
+    first = client.post("/company/v1/erasure-requests", json=payload).json()
+    second = client.post("/company/v1/erasure-requests", json=payload).json()
+    assert first["company_ticket"] == second["company_ticket"]
+    assert len([r for r in list_erasure_requests() if r["request_id"] == payload["request_id"]]) == 1
