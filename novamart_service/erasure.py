@@ -56,3 +56,8 @@ def mark_executed(company_ticket: str, execution_result: dict) -> dict | None:
                 item["message"] = "NovaMart demo staff approved and executed this request against synthetic records."
                 return dict(item)
     return None
+
+
+def reset_erasure_requests():
+    with _lock:
+        _requests.clear()
