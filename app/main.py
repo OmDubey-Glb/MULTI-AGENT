@@ -1,5 +1,6 @@
 import asyncio
 import json
+import httpx
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -8,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.agents.deletion_request import DeletionRequestAgent
 from app.agents.discovery import DiscoveryAgent
+from app.agents.verification import VerificationAgent
 from app.agents.intake import (
     OtpStart, OtpVerify, RequestSubmit, catalog, inbox, list_requests,
     start_otp, submit_request, verify_otp,
@@ -21,6 +23,8 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 orchestrator = Orchestrator()
 discovery_agent = DiscoveryAgent()
 deletion_agent = DeletionRequestAgent()
+verification_agent = VerificationAgent()
+NOVAMART_API = "http://127.0.0.1:9000"
 
 
 @app.get("/")
@@ -95,6 +99,19 @@ async def run_deletion_request(request_id: str):
     result = await deletion_agent.handle(request, discovery)
     return result
 
+
+
+@app.post("/api/verify/{request_id}")
+async def verify_request(request_id: str):
+    request = get_request(request_id)
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        response = await client.get(f"{NOVAMART_API}/company/v1/erasure-requests")
+        response.raise_for_status()
+        tickets = response.json()["requests"]
+    ticket = next((item for item in tickets if item["request_id"] == request_id), None)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="No company ticket exists.")
+    return await verification_agent.handle(request, ticket)
 
 @app.get("/api/requests")
 async def requests():
