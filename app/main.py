@@ -347,3 +347,11 @@ async def events():
             event_bus.unsubscribe(queue)
 
     return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+@app.post('/api/demo/reset')
+async def reset_synthetic_demo():
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        response = await client.post(NOVAMART_API + '/company/v1/demo/reset')
+        response.raise_for_status()
+    return {'status': 'reset', 'note': 'Synthetic demo records and company tickets reset.'}
