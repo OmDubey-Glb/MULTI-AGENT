@@ -49,7 +49,7 @@ class MonitoringAgent:
             db.row_factory = sqlite3.Row
             rows = db.execute("SELECT * FROM monitored_requests").fetchall()
             for row in rows:
-                terminal = row["status"] in {"COMPLETED", "COMPLETED_WITH_RETENTION", "CANCELLED"}
+                terminal = row["status"] in {"COMPLETED", "COMPLETED_WITH_RETENTION", "VERIFIED", "CANCELLED"}
                 if not terminal and datetime.fromisoformat(row["deadline_at"]) <= current:
                     alert = "Deadline breached; prepare human escalation."
                     db.execute("UPDATE monitored_requests SET status='DEADLINE_BREACHED',alert=? WHERE request_id=?",
