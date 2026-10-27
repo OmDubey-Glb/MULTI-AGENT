@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.agents.deletion_request import DeletionRequestAgent
 from app.agents.discovery import DiscoveryAgent
 from app.agents.intake import (
     OtpStart, OtpVerify, RequestSubmit, catalog, inbox, list_requests,
@@ -15,10 +16,11 @@ from app.core.events import event_bus
 from app.orchestrator import Orchestrator
 
 BASE_DIR = Path(__file__).resolve().parent
-app = FastAPI(title="DPDP Erasure Orchestrator", version="0.3.0")
+app = FastAPI(title="DPDP Erasure Orchestrator", version="0.4.0")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 orchestrator = Orchestrator()
 discovery_agent = DiscoveryAgent()
+deletion_agent = DeletionRequestAgent()
 
 
 @app.get("/")
@@ -74,12 +76,24 @@ async def create_request(payload: RequestSubmit):
     return result
 
 
-@app.post("/api/discovery/{request_id}")
-async def run_discovery(request_id: str):
+def get_request(request_id: str) -> dict:
     request = next((item for item in list_requests() if item["request_id"] == request_id), None)
     if request is None:
         raise HTTPException(status_code=404, detail="Erasure request not found.")
-    return await discovery_agent.handle(request)
+    return request
+
+
+@app.post("/api/discovery/{request_id}")
+async def run_discovery(request_id: str):
+    return await discovery_agent.handle(get_request(request_id))
+
+
+@app.post("/api/deletion-request/{request_id}")
+async def run_deletion_request(request_id: str):
+    request = get_request(request_id)
+    discovery = await discovery_agent.handle(request)
+    result = await deletion_agent.handle(request, discovery)
+    return result
 
 
 @app.get("/api/requests")
@@ -92,13 +106,13 @@ async def events():
     async def stream():
         queue = event_bus.subscribe()
         try:
-            yield "event: connected\ndata: {}\n\n"
+            yield "event: connected\\ndata: {}\\n\\n"
             while True:
                 try:
                     item = await asyncio.wait_for(queue.get(), timeout=15)
-                    yield f"data: {json.dumps(item)}\n\n"
+                    yield f"data: {json.dumps(item)}\\n\\n"
                 except asyncio.TimeoutError:
-                    yield ": keep-alive\n\n"
+                    yield ": keep-alive\\n\\n"
         finally:
             event_bus.unsubscribe(queue)
 
