@@ -150,3 +150,24 @@ def inbox() -> list[dict]:
 
 def list_requests() -> list[dict]:
     return list(_requests.values())
+
+
+def create_demo_request(customer_id: str, categories: list[str], scenario_label: str) -> dict:
+    """Create a clearly synthetic, OTP-bypassing request for the local scenario launcher only."""
+    selected = list(dict.fromkeys(categories))
+    if not selected or any(category not in CATEGORIES for category in selected):
+        raise ValueError("Invalid demo categories.")
+    request_id = "ER-DEMO-" + uuid4().hex[:8].upper()
+    record = {
+        "request_id": request_id,
+        "company_id": "novamart",
+        "customer_id": customer_id,
+        "verification_method": "DEMO_SCENARIO",
+        "selected_categories": selected,
+        "policy_assessment": {category: CATEGORIES[category].get("demo_action", "REVIEW") for category in selected},
+        "status": "RECEIVED",
+        "demo_scenario": scenario_label,
+        "note": "Synthetic scenario launcher only; not an identity-verified user request.",
+    }
+    _requests[request_id] = record
+    return record
