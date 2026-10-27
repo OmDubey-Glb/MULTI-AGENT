@@ -260,17 +260,8 @@ async def monitoring_check():
 
 @app.post("/api/monitoring/retry/{request_id}")
 async def monitoring_retry(request_id: str):
-    get_request(request_id)
-    result = monitoring_agent.record_retry(request_id)
-    if result is None:
-        raise HTTPException(status_code=404, detail="Monitoring record not found.")
-    if result["status"] == "RETRY_LIMIT_REACHED":
-        ticket = human_review_agent.open_ticket(request_id, "RETRY_LIMIT",
-            "Monitoring retry budget exhausted. Human review and company-side action are required.")
-        await event_bus.publish({"agent": "Monitoring", "status": "ERROR", "request_id": request_id, "message": result["alert"] + " Ticket " + ticket["ticket_id"] + " opened."})
-    else:
-        await event_bus.publish({"agent": "Monitoring", "status": "INFO", "request_id": request_id, "message": f"Retry budget recorded: {result['retry_count']} / {monitoring_agent.max_retries}. This endpoint does not resubmit a company deletion request; company authorization is still required."})
-    return result
+    """Backward-compatible alias for the real bounded company retry workflow."""
+    return await submit_bounded_retry(request_id)
 
 class HumanTicketResolution(BaseModel):
     note: str = Field(min_length=3, max_length=500)
