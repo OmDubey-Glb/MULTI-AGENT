@@ -22,3 +22,18 @@ $('#submit-request').addEventListener('click',async()=>{try{const result=await a
 $('#refresh-inbox').addEventListener('click',refreshInbox);
 $('#clear').addEventListener('click',()=>$('#logs').innerHTML='<div class="empty">Event view cleared.</div>');
 loadCatalog().catch(e=>message(e.message,'error'));refreshAgents();refreshInbox();
+
+async function refreshAudit(){
+  try{
+    const [events, integrity] = await Promise.all([api('/api/audit'), api('/api/audit/verify')]);
+    $('#audit-status').textContent = integrity.valid
+      ? '● CHAIN VALID · '+integrity.checked+' RECORDS'
+      : '● INTEGRITY FAILURE · CHECK RECORD '+integrity.checked;
+    $('#audit-status').className = 'audit-status '+(integrity.valid?'valid':'invalid');
+    $('#audit-list').innerHTML = events.events.length ? events.events.map(e =>
+      '<div class="audit-row"><b>#'+e.sequence+' · '+e.agent+'</b><span>'+e.action+' · '+e.outcome+'</span><small>'+e.timestamp+' · '+e.item_count+' item(s) · '+e.categories.join(', ')+'</small></div>'
+    ).join('') : 'No audit events yet.';
+  }catch(error){$('#audit-status').textContent='Audit service unavailable: '+error.message;}
+}
+$('#verify-audit').addEventListener('click',refreshAudit);
+refreshAudit();
