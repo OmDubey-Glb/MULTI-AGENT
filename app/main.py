@@ -121,10 +121,10 @@ async def run_deletion_request(request_id: str):
         agent="Deletion Request", action="COMPANY_REQUEST_SUBMITTED",
         outcome=result.get("status", "SUBMITTED"),
         item_count=len(discovery.get("items", [])), categories=request["selected_categories"])
-    if not result.get("company_ticket"):
+    if not result.get("company_ticket") or result.get("not_submitted_categories"):
         ticket = human_review_agent.open_ticket(
             request_id, "POLICY_REVIEW",
-            "Selected categories require human policy review; no company deletion request was submitted.",
+            "Some selected categories require human policy review and were not included in the company deletion request: " + ", ".join(result.get("not_submitted_categories", request["selected_categories"])) + ".",
         )
         await event_bus.publish({"agent": "Monitoring", "status": "WARN", "request_id": request_id,
                                  "message": "Human review ticket " + ticket["ticket_id"] + " opened for policy review."})
