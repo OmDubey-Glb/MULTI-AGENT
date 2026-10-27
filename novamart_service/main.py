@@ -19,6 +19,7 @@ class CompanyErasureRequest(BaseModel):
     discovered_item_ids: list[str] = Field(default_factory=list, max_length=100)
     submission_id: str | None = Field(default=None, min_length=5, max_length=80)
     attempt: int = Field(default=0, ge=0, le=3)
+    scenario_mode: str = Field(default="normal", pattern="^(normal|replica_lag|persistent_failure)$")
 
 
 @app.on_event("startup")
