@@ -35,9 +35,12 @@ class MonitoringAgent:
             row = db.execute("SELECT retry_count FROM monitored_requests WHERE request_id=?", (request_id,)).fetchone()
             if not row:
                 return None
+            # Never let repeated UI/API calls exceed the configured retry budget.
+            if row[0] >= self.max_retries:
+                return self.get(request_id)
             count = row[0] + 1
-            status = "RETRY_LIMIT_REACHED" if count >= self.max_retries else "RETRYING"
-            alert = "Maximum retry limit reached; human review required." if count >= self.max_retries else ""
+            status = "RETRY_LIMIT_REACHED" if count >= self.max_retries else "RETRY_BUDGET_RECORDED"
+            alert = "Maximum retry budget reached; human review required." if count >= self.max_retries else "Retry budget recorded only; no company request was resubmitted."
             db.execute("UPDATE monitored_requests SET retry_count=?,status=?,alert=? WHERE request_id=?",
                        (count, status, alert, request_id))
         return self.get(request_id)
