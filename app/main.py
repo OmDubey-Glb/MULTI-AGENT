@@ -161,7 +161,8 @@ async def verify_request(request_id: str):
         response = await client.get(f"{NOVAMART_API}/company/v1/erasure-requests")
         response.raise_for_status()
         tickets = response.json()["requests"]
-    ticket = next((item for item in tickets if item["request_id"] == request_id), None)
+    matching = [item for item in tickets if item["request_id"] == request_id]
+    ticket = matching[-1] if matching else None
     if ticket is None:
         raise HTTPException(status_code=404, detail="No company ticket exists.")
     result = await verification_agent.handle(request, ticket)
@@ -178,6 +179,69 @@ async def verify_request(request_id: str):
         await event_bus.publish({"agent": "Monitoring", "status": "WARN", "request_id": request_id,
                                  "message": "Human review ticket " + ticket["ticket_id"] + " opened for verification leftovers."})
     return result
+
+
+@app.post("/api/retry/{request_id}")
+async def submit_bounded_retry(request_id: str):
+    """Create a new company ticket for verified leftovers; never execute deletion."""
+    request = get_request(request_id)
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        response = await client.get(f"{NOVAMART_API}/company/v1/erasure-requests")
+        response.raise_for_status()
+        all_tickets = response.json()["requests"]
+        previous = [item for item in all_tickets if item["request_id"] == request_id]
+        if not previous:
+            raise HTTPException(status_code=404, detail="No company ticket exists for this request.")
+        latest = previous[-1]
+        if latest["execution"] != "EXECUTED":
+            raise HTTPException(status_code=409, detail="The company must execute the latest ticket before a retry can be assessed.")
+        scan_response = await client.post(
+            f"{NOVAMART_API}/company/v1/discovery",
+            json={"customer_id": request["customer_id"], "categories": latest["categories"]},
+        )
+        scan_response.raise_for_status()
+        scan = scan_response.json()
+        leftover_ids = sorted({item["item_id"] for item in scan.get("items", [])})
+        if not leftover_ids:
+            raise HTTPException(status_code=409, detail="No leftovers found; a retry is not needed.")
+        budget = monitoring_agent.record_retry(request_id)
+        if budget is None:
+            raise HTTPException(status_code=404, detail="Monitoring record not found.")
+        if budget["status"] == "RETRY_LIMIT_REACHED":
+            ticket = human_review_agent.open_ticket(
+                request_id, "RETRY_LIMIT",
+                "Three company-approved retry submissions have been used and leftovers remain: " + ", ".join(leftover_ids),
+            )
+            monitoring_agent.update(request_id, "AWAITING_HUMAN", outcome="RETRY_LIMIT_REACHED")
+            raise HTTPException(status_code=409, detail="Retry limit reached. Human-review ticket " + ticket["ticket_id"] + " opened.")
+        attempt = budget["retry_count"]
+        payload = {
+            "request_id": request_id,
+            "submission_id": f"{request_id}:retry:{attempt}",
+            "attempt": attempt,
+            "customer_id": request["customer_id"],
+            "categories": latest["categories"],
+            "discovered_item_ids": leftover_ids,
+        }
+        retry_response = await client.post(f"{NOVAMART_API}/company/v1/erasure-requests", json=payload)
+        retry_response.raise_for_status()
+        retry_ticket = retry_response.json()
+    monitoring_agent.update(request_id, "AWAITING_COMPANY", company_ticket=retry_ticket["company_ticket"], outcome="RETRY_SUBMITTED")
+    audit_agent.record(
+        request_id=request_id, subject=request["customer_id"],
+        agent="Deletion Request", action="BOUNDED_RETRY_SUBMITTED",
+        outcome="PENDING_COMPANY_APPROVAL", item_count=len(leftover_ids),
+        categories=latest["categories"],
+    )
+    await event_bus.publish({
+        "agent": "Deletion Request", "status": "SUCCESS", "request_id": request_id,
+        "message": f"Retry {attempt}/3 submitted to NovaMart as {retry_ticket['company_ticket']}; explicit company approval is still required.",
+        "details": {"leftover_count": len(leftover_ids), "company_ticket": retry_ticket["company_ticket"]},
+    })
+    return {"retry_count": attempt, "max_retries": monitoring_agent.max_retries,
+            "leftover_item_ids": leftover_ids, "company_ticket": retry_ticket["company_ticket"],
+            "status": retry_ticket["status"],
+            "message": "A new company request was submitted for leftovers only. No data was deleted."}
 
 
 
