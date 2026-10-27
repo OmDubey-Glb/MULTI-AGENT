@@ -37,3 +37,5 @@ async function refreshAudit(){
 }
 $('#verify-audit').addEventListener('click',refreshAudit);
 refreshAudit();
+
+setInterval(refreshAudit, 5000);
