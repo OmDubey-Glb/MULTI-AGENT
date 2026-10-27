@@ -42,6 +42,7 @@ class DeletionRequestAgent:
             "customer_id": request["customer_id"],
             "categories": eligible,
             "discovered_item_ids": allowed_items,
+            "scenario_mode": request.get("scenario_mode", "normal"),
         }
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
