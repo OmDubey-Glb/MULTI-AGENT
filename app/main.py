@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.agents.audit import AuditAgent
 from app.agents.deletion_request import DeletionRequestAgent
 from app.agents.discovery import DiscoveryAgent
 from app.agents.verification import VerificationAgent
@@ -18,12 +19,13 @@ from app.core.events import event_bus
 from app.orchestrator import Orchestrator
 
 BASE_DIR = Path(__file__).resolve().parent
-app = FastAPI(title="DPDP Erasure Orchestrator", version="0.4.0")
+app = FastAPI(title="DPDP Erasure Orchestrator", version="0.5.0")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 orchestrator = Orchestrator()
 discovery_agent = DiscoveryAgent()
 deletion_agent = DeletionRequestAgent()
 verification_agent = VerificationAgent()
+audit_agent = AuditAgent()
 NOVAMART_API = "http://127.0.0.1:9000"
 
 
@@ -71,6 +73,10 @@ async def check_otp(payload: OtpVerify):
 @app.post("/api/intake/submit")
 async def create_request(payload: RequestSubmit):
     result = submit_request(payload)
+    request = get_request(result["request_id"])
+    audit_agent.record(request_id=result["request_id"], subject=request["customer_id"],
+        agent="Intake", action="REQUEST_ACCEPTED", outcome=result["status"],
+        item_count=len(result["selected_categories"]), categories=result["selected_categories"])
     await event_bus.publish({"agent": "Intake", "status": "SUCCESS",
                              "request_id": result["request_id"],
                              "message": f"Intake accepted {len(result['selected_categories'])} selected data categories."})
@@ -89,7 +95,13 @@ def get_request(request_id: str) -> dict:
 
 @app.post("/api/discovery/{request_id}")
 async def run_discovery(request_id: str):
-    return await discovery_agent.handle(get_request(request_id))
+    request = get_request(request_id)
+    result = await discovery_agent.handle(request)
+    audit_agent.record(request_id=request_id, subject=request["customer_id"],
+        agent="Discovery", action="SCOPED_DISCOVERY", outcome="COMPLETED",
+        item_count=result.get("count", len(result.get("items", []))),
+        categories=request["selected_categories"])
+    return result
 
 
 @app.post("/api/deletion-request/{request_id}")
@@ -97,9 +109,11 @@ async def run_deletion_request(request_id: str):
     request = get_request(request_id)
     discovery = await discovery_agent.handle(request)
     result = await deletion_agent.handle(request, discovery)
+    audit_agent.record(request_id=request_id, subject=request["customer_id"],
+        agent="Deletion Request", action="COMPANY_REQUEST_SUBMITTED",
+        outcome=result.get("status", "SUBMITTED"),
+        item_count=len(discovery.get("items", [])), categories=request["selected_categories"])
     return result
-
-
 
 
 @app.post("/api/company/approve/{company_ticket}")
@@ -111,6 +125,10 @@ async def company_approve(company_ticket: str):
         )
         response.raise_for_status()
         result = response.json()
+    request = get_request(result["request_id"])
+    audit_agent.record(request_id=result["request_id"], subject=request["customer_id"],
+        agent="NovaMart Company Staff", action="COMPANY_APPROVAL_EXECUTION",
+        outcome="EXECUTED", categories=request["selected_categories"])
     await event_bus.publish({
         "agent": "NovaMart Company Staff",
         "status": "SUCCESS",
@@ -118,6 +136,7 @@ async def company_approve(company_ticket: str):
         "message": "Mock company operator action completed against synthetic demo records.",
     })
     return result
+
 
 @app.post("/api/verify/{request_id}")
 async def verify_request(request_id: str):
@@ -129,7 +148,23 @@ async def verify_request(request_id: str):
     ticket = next((item for item in tickets if item["request_id"] == request_id), None)
     if ticket is None:
         raise HTTPException(status_code=404, detail="No company ticket exists.")
-    return await verification_agent.handle(request, ticket)
+    result = await verification_agent.handle(request, ticket)
+    audit_agent.record(request_id=request_id, subject=request["customer_id"],
+        agent="Verification", action="INDEPENDENT_VERIFICATION",
+        outcome=result.get("status", "UNKNOWN"),
+        item_count=result.get("leftover_count", 0), categories=request["selected_categories"])
+    return result
+
+
+@app.get("/api/audit")
+async def audit_events(limit: int = 100):
+    return {"events": audit_agent.list_events(limit)}
+
+
+@app.get("/api/audit/verify")
+async def audit_integrity():
+    return audit_agent.verify_chain()
+
 
 @app.get("/api/requests")
 async def requests():
