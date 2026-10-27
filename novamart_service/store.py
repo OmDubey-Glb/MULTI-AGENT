@@ -40,3 +40,22 @@ def discover(customer_id: str, categories: list[str]) -> list[dict]:
             if row["customer_id"].casefold() == customer_id.casefold()
             and row["category"] in categories
         ])
+
+
+def execute_approved_erasure(customer_id: str, categories: list[str], item_ids: list[str]) -> dict:
+    """Company-side execution against synthetic in-memory records only."""
+    seed_demo_records()
+    allowed_ids = set(item_ids)
+    allowed_categories = set(categories)
+    with _lock:
+        before = len(_records)
+        _records[:] = [
+            row for row in _records
+            if not (
+                row["customer_id"].casefold() == customer_id.casefold()
+                and row["category"] in allowed_categories
+                and row["item_id"] in allowed_ids
+            )
+        ]
+        removed = before - len(_records)
+    return {"removed_count": removed, "executed_item_ids": sorted(allowed_ids)}
