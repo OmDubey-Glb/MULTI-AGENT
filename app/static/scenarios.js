@@ -1,0 +1,1 @@
+document.querySelectorAll('[data-scenario]').forEach(function(button){button.addEventListener('click',function(){var output=document.querySelector('#scenario-result');output.textContent='Scenario '+button.dataset.scenario+' selected. Use POST /api/demo/scenario/'+button.dataset.scenario+' to launch the synthetic workflow.';});});
