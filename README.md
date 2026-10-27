@@ -1,4 +1,6 @@
-# DPDP Erasure Orchestrator
+# CHAUKIDAR.AI
+
+**DPDP Erasure Orchestrator** — a privacy-conscious multi-agent prototype coordinating personal-data erasure requests with a company's authorized systems.
 
 A privacy-conscious Multi-Agent AI prototype coordinating personal-data erasure requests with a company's authorized systems.
 
