@@ -16,7 +16,7 @@ from app.agents.discovery import DiscoveryAgent
 from app.agents.verification import VerificationAgent
 from app.agents.intake import (
     OtpStart, OtpVerify, RequestSubmit, catalog, inbox, list_requests,
-    start_otp, submit_request, verify_otp,
+    start_otp, submit_request, verify_otp, create_demo_request,
 )
 from app.core.events import event_bus
 from app.orchestrator import Orchestrator
@@ -97,6 +97,36 @@ def get_request(request_id: str) -> dict:
     if request is None:
         raise HTTPException(status_code=404, detail="Erasure request not found.")
     return request
+
+
+@app.post("/api/demo/scenario/{scenario}")
+async def launch_demo_scenario(scenario: str):
+    """Launch deterministic synthetic demo data; intentionally bypasses OTP only for judge scenarios."""
+    modes = {
+        "A": ("normal", "Scenario A · Happy path"),
+        "B": ("replica_lag", "Scenario B · Replica lag"),
+        "C": ("persistent_failure", "Scenario C · Persistent failure"),
+    }
+    if scenario not in modes:
+        raise HTTPException(status_code=404, detail="Choose scenario A, B or C.")
+    mode, label = modes[scenario]
+    request = create_demo_request("CUST-1001", ["contact_details"], label)
+    request["scenario_mode"] = mode
+    monitoring_agent.register(request["request_id"], request["company_id"])
+    audit_agent.record(request_id=request["request_id"], subject=request["customer_id"],
+        agent="Demo Scenario", action="SCENARIO_LAUNCHED", outcome=label,
+        item_count=1, categories=request["selected_categories"])
+    await event_bus.publish({"agent": "Orchestrator", "status": "INFO",
+        "request_id": request["request_id"], "message": label + " started with synthetic records. Demo launcher bypasses OTP."})
+    discovery = await discovery_agent.handle(request)
+    company_result = await deletion_agent.handle(request, discovery)
+    if not company_result.get("company_ticket"):
+        raise HTTPException(status_code=409, detail="Scenario data did not produce a company ticket.")
+    monitoring_agent.update(request["request_id"], "AWAITING_COMPANY",
+        company_ticket=company_result["company_ticket"], outcome="SCENARIO_TICKET_CREATED")
+    return {"scenario": scenario, "label": label, "request_id": request["request_id"],
+        "company_ticket": company_result["company_ticket"], "status": company_result["status"],
+        "message": "Company ticket created. Click the explicit mock company approval control to execute synthetic data."}
 
 
 @app.post("/api/discovery/{request_id}")
