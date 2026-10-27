@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.agents.audit import AuditAgent
+from app.agents.monitoring import MonitoringAgent
 from app.agents.deletion_request import DeletionRequestAgent
 from app.agents.discovery import DiscoveryAgent
 from app.agents.verification import VerificationAgent
@@ -26,6 +27,7 @@ discovery_agent = DiscoveryAgent()
 deletion_agent = DeletionRequestAgent()
 verification_agent = VerificationAgent()
 audit_agent = AuditAgent()
+monitoring_agent = MonitoringAgent()
 NOVAMART_API = "http://127.0.0.1:9000"
 
 
@@ -74,6 +76,7 @@ async def check_otp(payload: OtpVerify):
 async def create_request(payload: RequestSubmit):
     result = submit_request(payload)
     request = get_request(result["request_id"])
+    monitoring_agent.register(result["request_id"], request["company_id"])
     audit_agent.record(request_id=result["request_id"], subject=request["customer_id"],
         agent="Intake", action="REQUEST_ACCEPTED", outcome=result["status"],
         item_count=len(result["selected_categories"]), categories=result["selected_categories"])
@@ -109,6 +112,8 @@ async def run_deletion_request(request_id: str):
     request = get_request(request_id)
     discovery = await discovery_agent.handle(request)
     result = await deletion_agent.handle(request, discovery)
+    monitor_status = "AWAITING_COMPANY" if result.get("company_ticket") else "REVIEW_REQUIRED"
+    monitoring_agent.update(request_id, monitor_status, company_ticket=result.get("company_ticket"), outcome=result.get("status", monitor_status))
     audit_agent.record(request_id=request_id, subject=request["customer_id"],
         agent="Deletion Request", action="COMPANY_REQUEST_SUBMITTED",
         outcome=result.get("status", "SUBMITTED"),
@@ -126,6 +131,7 @@ async def company_approve(company_ticket: str):
         response.raise_for_status()
         result = response.json()
     request = get_request(result["request_id"])
+    monitoring_agent.update(result["request_id"], "AWAITING_VERIFICATION", outcome="EXECUTED")
     audit_agent.record(request_id=result["request_id"], subject=request["customer_id"],
         agent="NovaMart Company Staff", action="COMPANY_APPROVAL_EXECUTION",
         outcome="EXECUTED", categories=request["selected_categories"])
@@ -149,12 +155,38 @@ async def verify_request(request_id: str):
     if ticket is None:
         raise HTTPException(status_code=404, detail="No company ticket exists.")
     result = await verification_agent.handle(request, ticket)
+    monitoring_agent.update(request_id, result.get("status", "VERIFICATION_UNKNOWN"), outcome=result.get("status", "UNKNOWN"))
     audit_agent.record(request_id=request_id, subject=request["customer_id"],
         agent="Verification", action="INDEPENDENT_VERIFICATION",
         outcome=result.get("status", "UNKNOWN"),
         item_count=result.get("leftover_count") or 0, categories=request["selected_categories"])
     return result
 
+
+
+@app.get("/api/monitoring")
+async def monitoring_snapshot():
+    monitoring_agent.check_deadlines()
+    return monitoring_agent.snapshot()
+
+@app.post("/api/monitoring/check")
+async def monitoring_check():
+    alerts = monitoring_agent.check_deadlines()
+    for alert in alerts:
+        await event_bus.publish({"agent": "Monitoring", "status": "WARN", "request_id": alert["request_id"], "message": alert["alert"]})
+    return {"alerts": alerts, "snapshot": monitoring_agent.snapshot()}
+
+@app.post("/api/monitoring/retry/{request_id}")
+async def monitoring_retry(request_id: str):
+    get_request(request_id)
+    result = monitoring_agent.record_retry(request_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Monitoring record not found.")
+    if result["status"] == "RETRY_LIMIT_REACHED":
+        await event_bus.publish({"agent": "Monitoring", "status": "ERROR", "request_id": request_id, "message": result["alert"]})
+    else:
+        await event_bus.publish({"agent": "Monitoring", "status": "WORKING", "request_id": request_id, "message": f"Retry budget: {result['retry_count']} / {monitoring_agent.max_retries}."})
+    return result
 
 @app.get("/api/audit")
 async def audit_events(limit: int = 100):
