@@ -17,6 +17,8 @@ class CompanyErasureRequest(BaseModel):
     customer_id: str = Field(min_length=3, max_length=64)
     categories: list[str] = Field(min_length=1, max_length=10)
     discovered_item_ids: list[str] = Field(default_factory=list, max_length=100)
+    submission_id: str | None = Field(default=None, min_length=5, max_length=80)
+    attempt: int = Field(default=0, ge=0, le=3)
 
 
 @app.on_event("startup")
