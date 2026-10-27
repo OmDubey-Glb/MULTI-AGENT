@@ -152,7 +152,7 @@ async def verify_request(request_id: str):
     audit_agent.record(request_id=request_id, subject=request["customer_id"],
         agent="Verification", action="INDEPENDENT_VERIFICATION",
         outcome=result.get("status", "UNKNOWN"),
-        item_count=result.get("leftover_count", 0), categories=request["selected_categories"])
+        item_count=result.get("leftover_count") or 0, categories=request["selected_categories"])
     return result
 
 
