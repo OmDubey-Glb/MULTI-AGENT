@@ -190,7 +190,8 @@ async def monitoring_snapshot():
 async def monitoring_check():
     alerts = monitoring_agent.check_deadlines()
     for alert in alerts:
-        await event_bus.publish({"agent": "Monitoring", "status": "WARN", "request_id": alert["request_id"], "message": alert["alert"]})
+        ticket = human_review_agent.open_ticket(alert["request_id"], "DEADLINE_BREACH", alert["alert"])
+        await event_bus.publish({"agent": "Monitoring", "status": "WARN", "request_id": alert["request_id"], "message": alert["alert"] + " Ticket " + ticket["ticket_id"] + " opened."})
     return {"alerts": alerts, "snapshot": monitoring_agent.snapshot()}
 
 @app.post("/api/monitoring/retry/{request_id}")
