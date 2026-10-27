@@ -121,6 +121,13 @@ async def run_deletion_request(request_id: str):
         agent="Deletion Request", action="COMPANY_REQUEST_SUBMITTED",
         outcome=result.get("status", "SUBMITTED"),
         item_count=len(discovery.get("items", [])), categories=request["selected_categories"])
+    if not result.get("company_ticket"):
+        ticket = human_review_agent.open_ticket(
+            request_id, "POLICY_REVIEW",
+            "Selected categories require human policy review; no company deletion request was submitted.",
+        )
+        await event_bus.publish({"agent": "Monitoring", "status": "WARN", "request_id": request_id,
+                                 "message": "Human review ticket " + ticket["ticket_id"] + " opened for policy review."})
     return result
 
 
@@ -163,6 +170,13 @@ async def verify_request(request_id: str):
         agent="Verification", action="INDEPENDENT_VERIFICATION",
         outcome=result.get("status", "UNKNOWN"),
         item_count=result.get("leftover_count") or 0, categories=request["selected_categories"])
+    if result.get("status") == "LEFTOVERS_FOUND":
+        ticket = human_review_agent.open_ticket(
+            request_id, "VERIFICATION_LEFTOVERS",
+            "Independent verification found remaining item IDs: " + ", ".join(result.get("leftover_item_ids", [])),
+        )
+        await event_bus.publish({"agent": "Monitoring", "status": "WARN", "request_id": request_id,
+                                 "message": "Human review ticket " + ticket["ticket_id"] + " opened for verification leftovers."})
     return result
 
 
@@ -186,7 +200,9 @@ async def monitoring_retry(request_id: str):
     if result is None:
         raise HTTPException(status_code=404, detail="Monitoring record not found.")
     if result["status"] == "RETRY_LIMIT_REACHED":
-        await event_bus.publish({"agent": "Monitoring", "status": "ERROR", "request_id": request_id, "message": result["alert"]})
+        ticket = human_review_agent.open_ticket(request_id, "RETRY_LIMIT",
+            "Monitoring retry budget exhausted. Human review and company-side action are required.")
+        await event_bus.publish({"agent": "Monitoring", "status": "ERROR", "request_id": request_id, "message": result["alert"] + " Ticket " + ticket["ticket_id"] + " opened."})
     else:
         await event_bus.publish({"agent": "Monitoring", "status": "INFO", "request_id": request_id, "message": f"Retry budget recorded: {result['retry_count']} / {monitoring_agent.max_retries}. This endpoint does not resubmit a company deletion request; company authorization is still required."})
     return result
