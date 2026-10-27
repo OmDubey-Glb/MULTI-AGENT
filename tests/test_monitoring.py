@@ -8,9 +8,12 @@ def test_retry_limit_escalates(tmp_path):
     agent.register("ER-1", "novamart")
     agent.record_retry("ER-1")
     agent.record_retry("ER-1")
-    result = agent.record_retry("ER-1")
-    assert result["status"] == "RETRY_LIMIT_REACHED"
-    assert result["retry_count"] == 3
+    final_permitted = agent.record_retry("ER-1")
+    assert final_permitted["status"] == "RETRY_BUDGET_RECORDED"
+    assert final_permitted["retry_count"] == 3
+    exhausted = agent.record_retry("ER-1")
+    assert exhausted["status"] == "RETRY_LIMIT_REACHED"
+    assert exhausted["retry_count"] == 3
 
 
 def test_deadline_breach_and_terminal_state(tmp_path):
