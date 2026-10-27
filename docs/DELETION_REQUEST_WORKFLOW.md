@@ -19,3 +19,10 @@ Company API endpoints:
 - `GET /company/v1/erasure-requests`
 
 The in-memory company ticket register is a local prototype. Production needs authenticated company APIs, durable ticket storage, authorization, idempotency guarantees, and a company-operated execution/approval process.
+
+
+## Bounded retry submissions
+
+If independent verification finds remaining records, the orchestrator can submit `POST /api/retry/{request_id}`. It re-scans the latest executed ticket's categories and creates a new NovaMart ticket containing only remaining item IDs. Each attempt has a distinct submission ID, so it is idempotent without reusing the original ticket. The company must explicitly approve each retry. Three retry submissions are allowed; a subsequent attempt is refused and escalated to human review.
+
+The retry endpoint never executes deletion. The old `/api/monitoring/retry/{request_id}` path is retained as an alias to this real company-ticket workflow; retry counts are no longer incremented without a company request.
