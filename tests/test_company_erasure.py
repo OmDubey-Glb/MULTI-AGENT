@@ -49,3 +49,22 @@ def test_retry_submission_gets_distinct_idempotent_company_ticket():
     assert first["request_id"] == payload["request_id"]
     assert first["attempt"] == 1
     assert len([r for r in list_erasure_requests() if r["submission_id"] == payload["submission_id"]]) == 1
+
+
+def test_retry_ticket_inherits_scenario_mode():
+    initial = {
+        "request_id": "ER-SCENARIO-0001",
+        "customer_id": "CUST-1001",
+        "categories": ["contact_details"],
+        "discovered_item_ids": ["contact:1001"],
+        "scenario_mode": "replica_lag",
+    }
+    first = client.post("/company/v1/erasure-requests", json=initial).json()
+    retry = client.post("/company/v1/erasure-requests", json={
+        **initial,
+        "submission_id": "ER-SCENARIO-0001:retry:1",
+        "attempt": 1,
+        "discovered_item_ids": ["subscriber:1001"],
+    }).json()
+    assert first["scenario_mode"] == "replica_lag"
+    assert retry["scenario_mode"] == "replica_lag"
