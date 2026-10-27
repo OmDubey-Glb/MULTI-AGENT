@@ -185,7 +185,7 @@ async def monitoring_retry(request_id: str):
     if result["status"] == "RETRY_LIMIT_REACHED":
         await event_bus.publish({"agent": "Monitoring", "status": "ERROR", "request_id": request_id, "message": result["alert"]})
     else:
-        await event_bus.publish({"agent": "Monitoring", "status": "WORKING", "request_id": request_id, "message": f"Retry budget: {result['retry_count']} / {monitoring_agent.max_retries}."})
+        await event_bus.publish({"agent": "Monitoring", "status": "INFO", "request_id": request_id, "message": f"Retry budget recorded: {result['retry_count']} / {monitoring_agent.max_retries}. This endpoint does not resubmit a company deletion request; company authorization is still required."})
     return result
 
 @app.get("/api/audit")
