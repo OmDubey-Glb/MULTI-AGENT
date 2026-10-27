@@ -6,6 +6,7 @@ from threading import Lock
 
 _lock = Lock()
 _records: list[dict] = []
+_scenario_modes: dict[str, str] = {}
 
 
 def seed_demo_records() -> None:
@@ -42,11 +43,24 @@ def discover(customer_id: str, categories: list[str]) -> list[dict]:
         ])
 
 
-def execute_approved_erasure(customer_id: str, categories: list[str], item_ids: list[str]) -> dict:
-    """Company-side execution against synthetic in-memory records only."""
+def execute_approved_erasure(customer_id: str, categories: list[str], item_ids: list[str], scenario_mode: str = "normal", attempt: int = 0) -> dict:
+    """Company-side execution against synthetic in-memory records only, with deterministic demo fault injection."""
     seed_demo_records()
     allowed_ids = set(item_ids)
     allowed_categories = set(categories)
+    # Replica lag: first execution leaves the EmailVendor copy behind; retry clears it.
+    # Persistent failure: every approved attempt leaves the requested records in place.
+    preserve_ids = set()
+    if scenario_mode == "persistent_failure":
+        preserve_ids = allowed_ids
+    elif scenario_mode == "replica_lag" and attempt == 0:
+        with _lock:
+            preserve_ids = {row["item_id"] for row in _records
+                            if row["customer_id"].casefold() == customer_id.casefold()
+                            and row["category"] in allowed_categories
+                            and row["item_id"] in allowed_ids
+                and row["item_id"] not in preserve_ids
+                            and row["system"] == "EmailVendor"}
     with _lock:
         before = len(_records)
         _records[:] = [
@@ -58,4 +72,4 @@ def execute_approved_erasure(customer_id: str, categories: list[str], item_ids: 
             )
         ]
         removed = before - len(_records)
-    return {"removed_count": removed, "executed_item_ids": sorted(allowed_ids)}
+    return {"removed_count": removed, "executed_item_ids": sorted(allowed_ids), "preserved_item_ids": sorted(preserve_ids), "scenario_mode": scenario_mode, "attempt": attempt}
