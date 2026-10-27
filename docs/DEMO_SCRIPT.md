@@ -16,7 +16,7 @@ All people and records are synthetic. Start with `python run.py` and open the lo
 3. Approve the new ticket explicitly, then verify again.
 4. Three retry submissions are permitted. A further retry attempt is refused and escalated to human review.
 
-The current seed dataset normally clears on the first approval. A deterministic replica-lag/failure injector and one-click scenario launcher are not implemented; a leftover must be deliberately present in a test fixture for a live retry demonstration.
+The current seed dataset normally clears on the first approval. The dashboard now includes deterministic B and C scenario launchers. B leaves the EmailVendor copy on the first company approval and clears it on the retry. C deliberately preserves records to demonstrate the three-retry cap and human escalation.
 
 ## Scenario C — Human escalation
 1. Use a request with persistent leftovers and submit/approve three retries.
@@ -24,7 +24,7 @@ The current seed dataset normally clears on the first approval. A deterministic 
 3. Review it in the Human Review Queue. Marking it reviewed does not delete data or approve a company ticket.
 4. POST /api/monitoring/check evaluates deadlines and opens DEADLINE_BREACH tickets for overdue nonterminal requests.
 
-A simulated clock, deterministic repeated-failure mode, and one-click A/B/C controls remain future work. Do not claim these are automated in the current build.
+The scenario launcher intentionally bypasses OTP for synthetic judge demonstrations. Use the regular intake flow to demonstrate OTP verification.
 
 ## Judge talking points
 - Six specialist agents coordinate through the orchestrator.
