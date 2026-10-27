@@ -15,13 +15,15 @@ def create_erasure_request(payload: dict) -> dict:
         existing = _requests.get(submission_id)
         if existing:
             return dict(existing)
+        prior = [r for r in _requests.values() if r["request_id"] == payload["request_id"]]
+        inherited_mode = prior[-1].get("scenario_mode", "normal") if prior else "normal"
         company_ticket = "NM-" + uuid4().hex[:8].upper()
         record = {
             "company_ticket": company_ticket,
             "submission_id": submission_id,
             "request_id": payload["request_id"],
             "attempt": payload.get("attempt", 0),
-            "scenario_mode": payload.get("scenario_mode", "normal"),
+            "scenario_mode": payload.get("scenario_mode", inherited_mode),
             "customer_id": payload["customer_id"],
             "categories": list(payload["categories"]),
             "discovered_item_ids": list(payload["discovered_item_ids"]),
