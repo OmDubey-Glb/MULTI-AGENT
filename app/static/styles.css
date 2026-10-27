@@ -63,3 +63,69 @@ button:hover:not(:disabled){transform:translateY(-1px)}
 @media(max-width:1380px){.layout{grid-template-columns:210px minmax(330px,1fr)}.terminal{grid-column:1/-1;position:static;max-height:360px;min-height:300px}}
 @media(max-width:850px){.sidebar{width:68px;padding:20px 7px}.brand{justify-content:center;margin:2px 0 35px}.brand div,.nav-label,.side-status small{display:none}.nav{font-size:0;text-align:center;padding:13px 2px}.side-status{font-size:0;text-align:center}.side-status:first-letter{font-size:12px}.layout{padding:16px;gap:16px;display:flex;flex-direction:column}.metrics,.center,.terminal{width:100%}.metrics{order:2}.center{order:1}.terminal{order:3}.graph{height:340px}.graph-panel{min-height:420px}}
 @media(max-width:560px){.topbar{padding:0 16px}.form-grid,.actions{grid-template-columns:1fr}.category-title small{display:block;margin:6px 0}.section-head{align-items:flex-start;flex-wrap:wrap}.demo{align-items:flex-start;flex-direction:column}.graph{height:300px}.node{width:68px;height:68px;font-size:8px}.coord{width:82px;height:68px}.legend{line-height:2}}
+
+/* Orchestration map: interactive nodes and continuous signal flow */
+.graph path{
+  stroke-dasharray:3 10;
+  stroke-linecap:round;
+  animation:agent-signal-flow 1.35s linear infinite;
+  opacity:.9;
+}
+@keyframes agent-signal-flow{
+  to{stroke-dashoffset:-26}
+}
+.node{
+  width:92px;
+  height:92px;
+  font-size:10.5px;
+  font-weight:600;
+  letter-spacing:.65px;
+  cursor:pointer;
+  transform:translate(-50%,-50%);
+  transition:transform .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s ease,background .24s ease,border-color .24s ease;
+  will-change:transform,box-shadow;
+}
+.node small{
+  font-size:8.5px;
+  font-weight:500;
+  letter-spacing:.45px;
+  line-height:1.4;
+}
+.node:hover,.node:focus-visible{
+  z-index:5;
+  transform:translate(-50%,-50%) scale(1.12);
+  box-shadow:0 0 12px currentColor,0 0 30px color-mix(in srgb,currentColor 48%,transparent),inset 0 0 22px color-mix(in srgb,currentColor 18%,transparent);
+  background:#102638;
+  outline:none;
+}
+.node.active{
+  z-index:4;
+  transform:translate(-50%,-50%) scale(1.1);
+  box-shadow:0 0 12px currentColor,0 0 30px color-mix(in srgb,currentColor 45%,transparent),inset 0 0 20px color-mix(in srgb,currentColor 16%,transparent);
+}
+.node.active:hover,.node.active:focus-visible{
+  transform:translate(-50%,-50%) scale(1.16);
+}
+.coord{
+  width:104px;
+  height:82px;
+  font-size:11px;
+}
+.coord small{font-size:9px}
+.panel-title{font-size:11px;letter-spacing:1.15px}
+.legend{font-size:10px}
+@media(max-width:850px){
+  .node{width:78px;height:78px;font-size:9px}
+  .node small{font-size:7.5px}
+  .coord{width:88px;height:72px}
+}
+@media(max-width:560px){
+  .node{width:68px;height:68px;font-size:8px}
+  .node small{font-size:7px}
+  .coord{width:78px;height:66px}
+}
+@media(prefers-reduced-motion:reduce){
+  .graph path{animation:none}
+  .node{transition:none}
+}
+
