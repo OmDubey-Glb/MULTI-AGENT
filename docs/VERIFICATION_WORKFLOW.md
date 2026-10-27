@@ -1,15 +1,15 @@
 # Verification Agent workflow
 
-The Deletion Request Agent submits a scoped request to NovaMart and does not execute deletion. A separate, explicit dashboard action represents a demo NovaMart operator approving the ticket. The mock company service changes only generated in-memory synthetic records.
+After NovaMart reports company execution, the Verification Agent independently scans every record in the exact company-approved category scope. It does not limit the scan to the original discovery IDs, so newly appearing records in those categories are also visible.
 
-After the company reports execution, the Verification Agent independently calls NovaMart discovery for the ticket categories and compares remaining item IDs with the submitted item IDs. It returns VERIFIED only when none of the requested items remain. A pending ticket returns WAITING_FOR_COMPANY; remaining items return LEFTOVERS_FOUND.
+A pending ticket returns WAITING_FOR_COMPANY. A full-scope scan with no remaining records returns VERIFIED. Remaining records return LEFTOVERS_FOUND with their item IDs.
 
-## Demo
-1. Submit an OTP-verified request for CUST-1001.
-2. Select Personal profile and Email address.
-3. Review the NovaMart ticket in PENDING_COMPANY_APPROVAL / NOT_EXECUTED.
-4. Click the explicit SIMULATE NOVAMART STAFF APPROVAL button.
-5. The local NovaMart mock service applies the approved action to synthetic in-memory records only.
-6. The Verification Agent performs a fresh discovery scan and reports the result.
+## Bounded retry
 
-This is a local hackathon simulation, not a connection to NovaMart or any real company. Ticket state and synthetic data reset when services restart. Production needs authenticated company operators, durable ticket records, company-owned execution, comprehensive verification across systems, and controlled backup/replica handling.
+When leftovers remain, `POST /api/retry/{request_id}` re-scans the latest executed ticket and submits a new NovaMart ticket containing only the leftover IDs and the same approved categories. Each retry uses a distinct idempotency key and requires a fresh explicit company approval. The orchestrator permits three retry submissions. If leftovers remain after those attempts, a subsequent retry call is refused and a human-review ticket is opened.
+
+The retry API never executes deletion. The company approval endpoint is the only demo path that mutates synthetic in-memory records.
+
+## Demo limits
+
+This is a local hackathon simulation, not a connection to NovaMart or any real company. Ticket state and synthetic data reset when services restart. A deterministic replica-lag/failure injector and one-click scenario launcher are not implemented yet. Production needs authenticated company operators, durable ticket records, company-owned execution, and comprehensive verification across systems.
