@@ -77,6 +77,6 @@ class MonitoringAgent:
         items = self.list_requests()
         return {"requests": items, "total": len(items),
                 "overdue": sum(x["status"] == "DEADLINE_BREACHED" for x in items),
-                "retry_limit_reached": sum(x["status"] == "RETRY_LIMIT_REACHED" for x in items),
+                "retry_limit_reached": sum(x["retry_count"] >= self.max_retries for x in items),
                 "pending_company": sum(x["status"] in {"RECEIVED", "COMPANY_REQUEST_PENDING", "AWAITING_COMPANY"} for x in items),
                 "max_retries": self.max_retries, "deadline_days": self.deadline_days}
