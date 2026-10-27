@@ -33,3 +33,36 @@ python run.py
 ```
 
 The offline Dev Inbox displays demo OTPs locally; it does not prove ownership of a real phone number or email address. Legal rules and deadlines are illustrative configuration and require qualified review before real-world use.
+
+
+## Judge preparation
+
+- [Architecture diagram and workflow](docs/ARCHITECTURE.md)
+- [3-scenario live demo instructions](docs/DEMO_SCRIPT.md)
+- [Viva guide: agent roles, design, limitations, and likely questions](docs/VIVA_GUIDE.md)
+- [Architecture decision records](docs/DECISIONS.md)
+
+## Local setup
+
+Use Python 3.11 or newer.
+
+```bash
+python -m venv .venv
+# Windows PowerShell:
+.venv\\Scripts\\Activate.ps1
+# macOS / Linux:
+source .venv/bin/activate
+
+python -m pip install -r requirements.txt
+python run.py
+```
+
+Open http://127.0.0.1:8000. The launcher starts the local NovaMart simulator on port 9000 and waits for its health endpoint before starting the dashboard. Stop both services with Ctrl+C.
+
+## Validation
+
+GitHub Actions runs `pytest -q` on pushes and pull requests to `main`. Check the repository's Actions tab for the latest result. A passing unit-test workflow does not replace a local browser/demo rehearsal.
+
+## Current implementation status
+
+This is a hackathon prototype, not a production DPDP compliance product. The NovaMart company API, demo identities, and scenario fault modes are synthetic. OTP delivery is local-only, legal rules are illustrative, and company approval is simulated. Production use would require qualified legal review, real identity verification, authenticated company operators, secure company integrations, durable state, and production-grade security controls.
