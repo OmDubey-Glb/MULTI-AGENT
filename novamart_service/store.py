@@ -74,3 +74,9 @@ def execute_approved_erasure(customer_id: str, categories: list[str], item_ids: 
         ]
         removed = before - len(_records)
     return {"removed_count": removed, "executed_item_ids": sorted(allowed_ids), "preserved_item_ids": sorted(preserve_ids), "scenario_mode": scenario_mode, "attempt": attempt}
+
+
+def reset_demo_records():
+    with _lock:
+        _records.clear()
+    seed_demo_records()
