@@ -71,6 +71,7 @@ def approve_and_execute(company_ticket: str):
     if ticket["execution"] == "EXECUTED":
         return ticket
     result = execute_approved_erasure(
-        ticket["customer_id"], ticket["categories"], ticket["discovered_item_ids"]
+        ticket["customer_id"], ticket["categories"], ticket["discovered_item_ids"],
+        ticket.get("scenario_mode", "normal"), ticket.get("attempt", 0)
     )
     return mark_executed(company_ticket, result)
