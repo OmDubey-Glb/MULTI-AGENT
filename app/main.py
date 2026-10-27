@@ -5,7 +5,6 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import ValidationError
 
 from app.agents.intake import (
     OtpStart, OtpVerify, RequestSubmit, catalog, inbox, list_requests,
@@ -83,13 +82,13 @@ async def events():
     async def stream():
         queue = event_bus.subscribe()
         try:
-            yield "event: connected\\ndata: {}\\n\\n"
+            yield "event: connected\ndata: {}\n\n"
             while True:
                 try:
                     item = await asyncio.wait_for(queue.get(), timeout=15)
-                    yield f"data: {json.dumps(item)}\\n\\n"
+                    yield f"data: {json.dumps(item)}\n\n"
                 except asyncio.TimeoutError:
-                    yield ": keep-alive\\n\\n"
+                    yield ": keep-alive\n\n"
         finally:
             event_bus.unsubscribe(queue)
 
