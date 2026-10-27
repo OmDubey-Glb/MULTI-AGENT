@@ -75,3 +75,12 @@ def approve_and_execute(company_ticket: str):
         ticket.get("scenario_mode", "normal"), ticket.get("attempt", 0)
     )
     return mark_executed(company_ticket, result)
+
+
+@app.post('/company/v1/demo/reset')
+def reset_demo():
+    from novamart_service.store import reset_demo_records
+    from novamart_service.erasure import reset_erasure_requests
+    reset_demo_records()
+    reset_erasure_requests()
+    return {'status': 'reset', 'data': 'synthetic-only'}
