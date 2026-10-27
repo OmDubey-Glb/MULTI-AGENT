@@ -56,3 +56,20 @@ class AuditAgent:
             event["categories"] = json.loads(event.pop("categories_json"))
             events.append(event)
         return events
+
+    def verify_chain(self):
+        with sqlite3.connect(self.db_path) as db:
+            db.row_factory = sqlite3.Row
+            rows = db.execute("SELECT * FROM audit_events ORDER BY sequence").fetchall()
+        previous = "GENESIS"
+        for row in rows:
+            record = {"timestamp": row["timestamp"], "request_id": row["request_id"],
+                "subject_hash": row["subject_hash"], "agent": row["agent"],
+                "action": row["action"], "outcome": row["outcome"],
+                "item_count": row["item_count"],
+                "categories": json.loads(row["categories_json"]),
+                "previous_hash": row["previous_hash"]}
+            if row["previous_hash"] != previous or row["event_hash"] != self._hash(record):
+                return {"valid": False, "checked": row["sequence"], "total": len(rows)}
+            previous = row["event_hash"]
+        return {"valid": True, "checked": len(rows), "total": len(rows)}
