@@ -1,6 +1,7 @@
 document.querySelectorAll('[data-scenario]').forEach(button=>button.addEventListener('click',async()=>{
  const out=document.querySelector('#scenario-result');out.textContent='Launching scenario…';
  try{
+  await fetch('/api/demo/reset',{method:'POST'});
   const response=await fetch('/api/demo/scenario/'+button.dataset.scenario,{method:'POST'});
   const run=await response.json();if(!response.ok)throw new Error(run.detail);
   out.textContent=run.label+' · '+run.request_id+' · '+run.company_ticket;
