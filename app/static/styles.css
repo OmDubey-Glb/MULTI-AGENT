@@ -234,3 +234,27 @@ body{font-size:14px}
 .node[data-agent],.agent{cursor:pointer}
 .node[data-agent]:focus-visible{outline:2px solid currentColor;outline-offset:5px}
 .agent-modal{z-index:1200}
+
+/* CHAUKIDAR BOT — additive sidebar item and independent chat drawer */
+.chaukidar-bot-nav{display:flex;align-items:center;gap:9px;width:calc(100% - 4px);margin:14px 2px;padding:11px 12px;border:1px solid #28556a;border-radius:9px;background:#10283a;color:#bceeff;text-align:left;font:700 12px Inter,Segoe UI,Arial,sans-serif;cursor:pointer;box-shadow:inset 0 0 18px #1b78951a}
+.chaukidar-bot-nav:hover{background:#15364a;border-color:#39d9ff;color:#fff}
+.chaukidar-bot-nav span{margin-left:auto;padding:3px 6px;border-radius:5px;background:#174b45;color:#8df2c4;font-size:8px;letter-spacing:1px}
+.chatbot-shell{position:fixed;inset:0;z-index:1500;display:flex;justify-content:flex-end;background:#020711b8;backdrop-filter:blur(7px);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+.chatbot-shell.visible{opacity:1;visibility:visible}
+.chatbot-window{width:min(570px,100vw);height:100%;display:flex;flex-direction:column;background:#091523;border-left:1px solid #29465b;box-shadow:-22px 0 70px #0009;color:#e7f2ff}
+.chatbot-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 22px;border-bottom:1px solid #20364b;background:#0d1d2e}
+.chatbot-brand{display:flex;align-items:center;gap:12px}.chatbot-mark{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:#123448;color:#58ddff;font-size:25px}
+.chatbot-brand b{display:block;font-size:13px;letter-spacing:1.2px}.chatbot-brand small{display:block;margin-top:5px;color:#7f9ab3;font-size:9px;letter-spacing:1px}
+.chatbot-tools{display:flex;align-items:center;gap:8px}.chat-language-label{color:#7f9ab3;font-size:9px;letter-spacing:1px}.chatbot-tools select{padding:8px 10px;border:1px solid #2d4c63;border-radius:7px;background:#10263a;color:#d9efff}
+.chat-close{width:34px;height:34px;padding:0;border:1px solid #31475d;border-radius:8px;background:#14263a;color:#dcecff;font-size:22px}
+.chatbot-scope{padding:13px 22px;border-bottom:1px solid #1d3044;background:#0b1928}.chatbot-scope span{display:block;color:#77e8bd;font-size:9px;font-weight:700;letter-spacing:1.3px}.chatbot-scope small{display:block;margin-top:6px;color:#8da3b9;font-size:10px;line-height:1.5}
+.chat-messages{flex:1;overflow:auto;padding:22px;display:flex;flex-direction:column;gap:14px}
+.chat-bubble{max-width:92%;padding:14px 16px;border:1px solid #294158;border-radius:13px;background:#102236;color:#dce9f7;font-size:13px;line-height:1.7;white-space:normal;overflow-wrap:anywhere}
+.chat-bubble p{margin:0;white-space:pre-wrap}.chat-bubble.bot{align-self:flex-start;border-top-left-radius:4px}.chat-bubble.user{align-self:flex-end;background:#123b4b;border-color:#27647a;border-top-right-radius:4px}
+.chat-bubble>small{display:block;margin-top:9px;color:#8da7bc;font-size:10px}
+.chat-sources{display:grid;gap:7px;margin-top:13px;padding-top:10px;border-top:1px solid #2a4054}.chat-sources b{color:#77dfff;font-size:9px;letter-spacing:1px}.chat-sources a{color:#9fc9e7;font-size:10px;text-decoration:underline;line-height:1.5}
+.chat-note{display:block;margin-top:11px;color:#8299af;font-size:9px}
+.chat-pending{color:#75dfff}.chat-suggestions{display:flex;flex-wrap:wrap;gap:8px;padding:0 22px 14px}.chat-suggestions button{padding:8px 10px;border:1px solid #294a61;border-radius:20px;background:#10263a;color:#a8d8ed;font-size:10px;cursor:pointer}.chat-suggestions button:hover{border-color:#39d9ff;color:#fff}
+.chat-compose{display:flex;align-items:flex-end;gap:10px;padding:15px 20px;border-top:1px solid #22394d;background:#0d1c2b}.chat-compose textarea{flex:1;min-height:48px;max-height:120px;resize:vertical;padding:12px;border:1px solid #304c63;border-radius:9px;background:#081421;color:#edf6ff;font:13px Inter,Segoe UI,Arial,sans-serif}.chat-compose button{min-width:76px;padding:13px 12px;border:1px solid #287d99;border-radius:8px;background:#123e52;color:#bceeff;font-size:10px;font-weight:700;cursor:pointer}.chat-compose button:disabled{opacity:.5;cursor:wait}
+.chatbot-footer{padding:11px 20px;border-top:1px solid #1b3044;color:#71889f;font-size:9px;text-align:center}
+@media(max-width:520px){.chatbot-window{width:100vw}.chatbot-header{padding:15px}.chat-messages{padding:15px}.chat-suggestions{padding:0 15px 12px}.chat-compose{padding:12px}}
