@@ -129,3 +129,38 @@ button:hover:not(:disabled){transform:translateY(-1px)}
   .node{transition:none}
 }
 
+
+/* Agent profile modal, colour-coded energy orb and larger interface typography */
+body{font-size:14.5px}
+.nav{font-size:13px}.nav-label{font-size:10px}
+.agent{font-size:12px;padding:8px 9px;margin:7px -5px;border:1px solid transparent;border-radius:8px;cursor:pointer;transition:background .2s,border-color .2s,transform .2s}
+.agent b{font-size:10px}
+.agent:hover,.agent:focus-visible{background:#14283b;border-color:#31536a;transform:translateX(3px);outline:none}
+.metrics h3,.panel-title{font-size:11px}.gauge small,.muted{font-size:10px}
+.section-head{font-size:12px}.form-grid label,.category-title{font-size:10px}.category{font-size:12px}
+.terminal-head b{font-size:11px}.terminal-tabs{font-size:10px}
+.agent-modal{--agent-color:#39d9ff;position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:22px;background:#020711c9;backdrop-filter:blur(10px);opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s}
+.agent-modal.visible{opacity:1;visibility:visible}
+.agent-dialog{width:min(760px,96vw);min-height:420px;position:relative;display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;padding:30px;background:linear-gradient(145deg,#101e30,#091321);border:1px solid color-mix(in srgb,var(--agent-color) 55%,#26364a);border-radius:20px;box-shadow:0 25px 90px #0009,0 0 35px color-mix(in srgb,var(--agent-color) 15%,transparent)}
+.agent-close{position:absolute;right:16px;top:14px;width:34px;height:34px;padding:0;font-size:22px;border-radius:50%;background:#17283a;border-color:#334b61;color:#dce8f6;z-index:3}
+.agent-visual{position:relative;min-height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;border-radius:15px;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--agent-color) 14%,#0b1828),#081321 68%);border:1px solid #25384e;touch-action:pan-y}
+#agent-particles{position:absolute;inset:0;width:100%;height:100%}
+.energy-orb{width:150px;height:150px;position:relative;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffffffaa 0 2%,color-mix(in srgb,var(--agent-color) 85%,white) 4%,color-mix(in srgb,var(--agent-color) 42%,#0b1422) 38%,#081321 72%);box-shadow:0 0 22px var(--agent-color),0 0 65px color-mix(in srgb,var(--agent-color) 55%,transparent),inset -12px -15px 30px #0009;animation:orb-float 3s ease-in-out infinite}
+.energy-orb:before,.energy-orb:after{content:"";position:absolute;inset:-14px;border:1px solid color-mix(in srgb,var(--agent-color) 65%,transparent);border-radius:50%;animation:orb-ring 4s linear infinite}
+.energy-orb:after{inset:-26px;opacity:.45;animation-direction:reverse;animation-duration:7s}
+.energy-orb span{width:34px;height:34px;border-radius:50%;background:#ffffffaa;filter:blur(14px)}
+.energy-orb.burst{animation:orb-burst .38s ease-out}
+.agent-visual>small{position:absolute;bottom:22px;color:var(--agent-color);font-size:10px;letter-spacing:1.5px}
+.agent-copy{padding:18px 10px 12px 0;align-self:center}
+.agent-kicker{font-size:10px;letter-spacing:1.6px;color:var(--agent-color);font-weight:700}
+.agent-copy h2{font-size:27px;margin:12px 0;color:#eef6ff}
+.agent-copy p{font-size:14px;line-height:1.7;color:#aebed0}
+.agent-copy h4{font-size:11px;letter-spacing:1.2px;color:var(--agent-color);margin:22px 0 10px}
+.agent-copy ul{padding-left:19px;margin:0;color:#d1ddeb}
+.agent-copy li{font-size:13px;line-height:1.65;margin:7px 0}
+.agent-responsibility{margin-top:20px;padding:12px 14px;border-left:3px solid var(--agent-color);background:color-mix(in srgb,var(--agent-color) 9%,#0b1727);border-radius:0 8px 8px 0;color:#c3d3e3;font-size:12px;line-height:1.6}
+@keyframes orb-float{50%{transform:translateY(-8px) scale(1.025)}}
+@keyframes orb-ring{to{transform:rotate(360deg) scale(1.05)}}
+@keyframes orb-burst{50%{transform:scale(1.13);filter:brightness(1.5)}}
+@media(max-width:650px){.agent-dialog{grid-template-columns:1fr;gap:16px;padding:20px}.agent-visual{min-height:230px}.energy-orb{width:112px;height:112px}.agent-copy{padding:8px 4px}.agent-copy h2{font-size:23px}}
+@media(prefers-reduced-motion:reduce){.energy-orb,.energy-orb:before,.energy-orb:after{animation:none}}
