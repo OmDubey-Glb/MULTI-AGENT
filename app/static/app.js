@@ -161,3 +161,38 @@ const processingSteps=[
 async function runTransition(title,description,progress=0){
  const layer=$('#agent-processing');$('#processing-title').textContent=title;$('#processing-description').textContent=description;$('#processing-fill').style.width=(progress*100)+'%';layer.classList.add('visible');layer.setAttribute('aria-hidden','false');await new Promise(resolve=>setTimeout(resolve,1500));layer.classList.remove('visible');layer.setAttribute('aria-hidden','true');
 }
+
+/* CHAUKIDAR BOT: isolated bilingual DPDP assistant UI. */
+const chatbot=$('#chaukidar-chat');
+const chatMessages=$('#chat-messages');
+const chatForm=$('#chat-form');
+const chatQuestion=$('#chat-question');
+const chatLanguage=$('#chat-language');
+function openChaukidarBot(){chatbot.classList.add('visible');chatbot.setAttribute('aria-hidden','false');chatQuestion.focus();}
+function closeChaukidarBot(){chatbot.classList.remove('visible');chatbot.setAttribute('aria-hidden','true');}
+$('#open-chaukidar-bot').addEventListener('click',openChaukidarBot);
+$('#close-chaukidar-bot').addEventListener('click',closeChaukidarBot);
+chatbot.addEventListener('click',e=>{if(e.target===chatbot)closeChaukidarBot();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&chatbot.classList.contains('visible'))closeChaukidarBot();});
+function addChatBubble(kind,text,sources=[],note=''){
+ const bubble=document.createElement('article');bubble.className='chat-bubble '+kind;
+ const body=document.createElement('p');body.textContent=text; bubble.append(body);
+ if(sources.length){const refs=document.createElement('div');refs.className='chat-sources';const heading=document.createElement('b');heading.textContent=chatLanguage.value==='hi'?'आधिकारिक स्रोत':'OFFICIAL SOURCES';refs.append(heading);sources.forEach(src=>{const a=document.createElement('a');a.href=src.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=src.label+' · '+src.detail;refs.append(a);});bubble.append(refs);}
+ if(note){const n=document.createElement('small');n.className='chat-note';n.textContent=note;bubble.append(n);}
+ chatMessages.append(bubble);chatMessages.scrollTop=chatMessages.scrollHeight;
+}
+async function sendChatQuestion(question){
+ const clean=question.trim();if(!clean)return;
+ addChatBubble('user',clean);chatQuestion.value='';$('#chat-send').disabled=true;
+ const pending=document.createElement('article');pending.className='chat-bubble bot chat-pending';pending.textContent=chatLanguage.value==='hi'?'कानूनी संदर्भ देख रहा हूँ…':'Checking the DPDP knowledge base…';chatMessages.append(pending);chatMessages.scrollTop=chatMessages.scrollHeight;
+ try{
+  const response=await fetch('/api/dpdp-assistant/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:clean,language:chatLanguage.value})});
+  const data=await response.json().catch(()=>({detail:'Unexpected server response'}));
+  if(!response.ok)throw new Error(data.detail||'Assistant request failed');
+  pending.remove();addChatBubble('bot',data.answer,data.sources||[],data.note||'');
+ }catch(error){pending.remove();addChatBubble('bot',(chatLanguage.value==='hi'?'अभी उत्तर नहीं मिल पाया: ':'I could not retrieve an answer: ')+error.message);}
+ finally{$('#chat-send').disabled=false;chatQuestion.focus();}
+}
+chatForm.addEventListener('submit',e=>{e.preventDefault();sendChatQuestion(chatQuestion.value);});
+document.querySelectorAll('#chat-suggestions button').forEach(b=>b.addEventListener('click',()=>sendChatQuestion(b.dataset.question)));
+chatLanguage.addEventListener('change',()=>{chatQuestion.placeholder=chatLanguage.value==='hi'?'DPDP से जुड़ा सवाल पूछें…':'Ask a DPDP question…';});
