@@ -164,3 +164,11 @@ body{font-size:14.5px}
 @keyframes orb-burst{50%{transform:scale(1.13);filter:brightness(1.5)}}
 @media(max-width:650px){.agent-dialog{grid-template-columns:1fr;gap:16px;padding:20px}.agent-visual{min-height:230px}.energy-orb{width:112px;height:112px}.agent-copy{padding:8px 4px}.agent-copy h2{font-size:23px}}
 @media(prefers-reduced-motion:reduce){.energy-orb,.energy-orb:before,.energy-orb:after{animation:none}}
+
+.agent-nav-heading{margin-top:22px}
+.agent-nav-list{display:flex;flex-direction:column;gap:4px;margin:0 0 10px}
+.agent-nav{display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;border:1px solid transparent;border-radius:8px;background:transparent;color:#9eb1c8;text-align:left;font:500 12px Inter,Segoe UI,Arial,sans-serif;cursor:pointer;transition:background .2s,border-color .2s,transform .2s,color .2s}
+.agent-nav i{width:8px;height:8px;flex:none;border-radius:50%;background:var(--agent-nav-color);box-shadow:0 0 9px var(--agent-nav-color)}
+.agent-nav:hover,.agent-nav:focus-visible{background:#14283b;border-color:#31536a;color:#eef7ff;transform:translateX(3px);outline:none}
+.agent-nav:active{transform:scale(.98)}
+@media(max-width:760px){.agent-nav{font-size:11px;padding:8px}}
