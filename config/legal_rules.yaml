@@ -1,5 +1,6 @@
-# Illustrative demo policy only; not legal advice.
-# Validate legal categories and deadlines with qualified counsel before production.
+# Illustrative NovaMart e-commerce demo catalog, modeled on common online-shopping account data.
+# This is fictional and is NOT Flipkart's official data inventory or retention policy.
+# Legal retention categories are marked REVIEW/RETAIN for company/legal review; no retention period is asserted.
 default_deadline_days: 30
 categories:
   profile_identity:
@@ -8,9 +9,41 @@ categories:
   contact_details:
     label: Email address
     demo_action: DELETE
+  phone_number:
+    label: Phone number
+    demo_action: DELETE
+  shipping_addresses:
+    label: Saved delivery addresses
+    demo_action: DELETE
+  wishlist:
+    label: Wishlist / saved products
+    demo_action: DELETE
+  cart:
+    label: Shopping cart
+    demo_action: DELETE
+  reviews:
+    label: Product ratings and reviews
+    demo_action: DELETE
+  search_activity:
+    label: Search and browsing activity
+    demo_action: DELETE
   order_history:
-    label: Order history
+    label: Buying / order history
     demo_action: REVIEW
+    retention_note: Some transaction records may need to be retained or partially redacted; company policy review required.
   invoices:
-    label: Invoices
+    label: Invoices and tax documents
     demo_action: RETAIN
+    retention_note: May be retained where accounting or tax obligations apply; company review required.
+  payment_records:
+    label: Payment and transaction records
+    demo_action: REVIEW
+    retention_note: Financial records may be subject to legal, banking or dispute obligations; company review required.
+  customer_support:
+    label: Customer support conversations
+    demo_action: REVIEW
+    retention_note: May contain dispute, fraud or service records; company review required.
+  loyalty_points:
+    label: Rewards and loyalty points
+    demo_action: REVIEW
+    retention_note: Check program terms, balances and applicable company policy.
