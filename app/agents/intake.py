@@ -46,7 +46,7 @@ class OtpVerify(BaseModel):
 
 class RequestSubmit(BaseModel):
     session_id: str
-    categories: list[str] = Field(min_length=1, max_length=10)
+    categories: list[str] = Field(min_length=1, max_length=13)
 
 
 def catalog() -> dict:
