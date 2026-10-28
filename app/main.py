@@ -20,6 +20,7 @@ from app.agents.intake import (
 )
 from app.core.events import event_bus
 from app.orchestrator import Orchestrator
+from app.dpdp_assistant import answer_dpdp
 
 BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI(title="DPDP Erasure Orchestrator", version="0.5.0")
@@ -38,6 +39,18 @@ NOVAMART_API = "http://127.0.0.1:9000"
 async def dashboard():
     return FileResponse(BASE_DIR / "static" / "index.html")
 
+
+
+
+class DpdpAssistantQuestion(BaseModel):
+    question: str = Field(min_length=3, max_length=700)
+    language: str = Field(default="en", pattern="^(en|hi)$")
+
+
+@app.post("/api/dpdp-assistant/ask")
+async def ask_dpdp_assistant(payload: DpdpAssistantQuestion):
+    """Answer only from the curated bilingual DPDP knowledge base; no external model/API."""
+    return answer_dpdp(payload.question, payload.language)
 
 @app.get("/api/health")
 async def health():
