@@ -53,7 +53,7 @@ def catalog() -> dict:
     return {
         "company": {"id": "novamart", "name": "NovaMart"},
         "categories": [
-            {"id": key, "label": value.get("label", key)}
+            {"id": key, "label": value.get("label", key), "action": value.get("demo_action", "REVIEW"), "reason": value.get("retention_note", "Available for an erasure request; NovaMart will assess the selected scope.")}
             for key, value in CATEGORIES.items()
         ],
     }
