@@ -226,3 +226,11 @@ body{font-size:14px}
 @keyframes wizard-enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes orbit-spin{to{transform:rotate(360deg)}}
 @media(max-width:650px){.intake.wizard{padding:16px}.wizard-heading h2{font-size:17px}.wizard .actions{grid-template-columns:1fr}.wizard-footer{flex-direction:column}.processing-card{padding:28px 20px}}
+
+/* OTP is intentionally displayed in the local-only development inbox */
+.otp-demo-code{margin:14px 0;padding:13px 16px;border:1px solid #287c68;border-radius:10px;background:#0c2b28;color:#a5f3d0;font-size:11px;letter-spacing:.8px}
+.otp-demo-code strong{display:inline-block;margin-left:12px;font:700 22px Consolas,monospace;letter-spacing:5px;color:#eafff7}
+.otp-demo-code small{display:block;margin-top:6px;color:#82b6a7;font-size:10px;letter-spacing:0}
+.node[data-agent],.agent{cursor:pointer}
+.node[data-agent]:focus-visible{outline:2px solid currentColor;outline-offset:5px}
+.agent-modal{z-index:1200}
