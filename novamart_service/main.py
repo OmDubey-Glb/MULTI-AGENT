@@ -34,7 +34,7 @@ def health():
 
 @app.post("/company/v1/discovery")
 def discovery(payload: DiscoveryQuery):
-    allowed = {"profile_identity", "contact_details", "order_history", "invoices"}
+    allowed = {"profile_identity", "contact_details", "phone_number", "shipping_addresses", "wishlist", "cart", "reviews", "search_activity", "order_history", "invoices", "payment_records", "customer_support", "loyalty_points"}
     if any(category not in allowed for category in payload.categories):
         return {"status": "rejected", "reason": "Unknown category", "items": []}
     items = discover(payload.customer_id, payload.categories)
