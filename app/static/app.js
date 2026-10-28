@@ -143,3 +143,8 @@ $('#agent-visual').addEventListener('pointerdown',e=>{
  for(let i=0;i<32;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*3;orbParticles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:1+Math.random()*2,a:1,life:0});}
  orbParticles=orbParticles.slice(-120);agentOrb.classList.remove('burst');void agentOrb.offsetWidth;agentOrb.classList.add('burst');
 });
+
+/* Dedicated clickable specialist-agent navigation in the sidebar */
+document.querySelectorAll('.agent-nav[data-profile]').forEach(button=>{
+ button.addEventListener('click',()=>showAgent(button.dataset.profile));
+});
